@@ -1,0 +1,35 @@
+{
+  "name": "quick-note",
+  "author": "PJ McCormick",
+  "version": "1.0.0",
+  "private": true,
+  "keywords": [
+    "pebble-app"
+  ],
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Quick Note",
+    "uuid": "33a977ec-5e36-4fcd-828c-cef2d44404a2",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false,
+      "hiddenApp": false,
+      "onlyShownOnCommunication": false
+    },
+    "messageKeys": [
+      "NOTE_TEXT",
+      "STATUS"
+    ],
+    "resources": {
+      "media": []
+    },
+    "capabilities": []
+  }
+}

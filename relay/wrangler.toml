@@ -1,0 +1,14 @@
+name = "quick-note"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+# Appended to every subject line. Leave empty for no tags.
+# Evernote subject syntax: "Title @Notebook #tag !YYYY/MM/DD"
+DEFAULT_TAGS = "#inbox"
+
+# Set these with `wrangler secret put <NAME>` - do NOT put them here:
+#   SHARED_SECRET
+#   RESEND_API_KEY
+#   EVERNOTE_EMAIL
+#   FROM_EMAIL
