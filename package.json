@@ -6,7 +6,9 @@
   "keywords": [
     "pebble-app"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "Quick Note",
     "uuid": "33a977ec-5e36-4fcd-828c-cef2d44404a2",
@@ -30,6 +32,11 @@
     "resources": {
       "media": []
     },
-    "capabilities": []
+    "capabilities": [
+      "configurable"
+    ],
+    "usesPermissions": [
+      "Internet"
+    ]
   }
 }

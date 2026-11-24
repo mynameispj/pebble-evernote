@@ -11,18 +11,29 @@ The watch has no internet. PebbleKit JS runs inside the Pebble phone app and
 does have it. The Worker exists so your Evernote address and mail API key never
 live on the phone — anyone who has that address can write into your account.
 
+The phone only holds the Worker's URL and a shared secret, which you enter on
+the app's settings page. Nothing secret is compiled into the app or committed
+here.
+
 ## Controls
 
 | Button | Action |
 | --- | --- |
 | SELECT | Dictate. Transcription is appended to the current note. |
 | UP | Send the note to Evernote. |
-| DOWN | Clear the buffer. |
-| BACK | Exit. |
+| Hold DOWN | Clear the note. |
+| BACK | Exit. The unsent note is kept and restored next time. |
 
 Dictation cuts off when it detects you've stopped or after ~6 seconds, whichever
 comes first — that's why SELECT appends rather than sends. Tap it a few times to
-build up a longer note, then UP.
+build up a longer note, then UP. The view follows the end of the note as it
+grows.
+
+The bar at the bottom shows what happened: `Saved to Evernote`, `Failed - UP
+retries` (the relay or mail service refused it), `No reply - UP retries` (the
+phone didn't answer within 20 seconds), `Phone unreachable`, or `Set up in
+phone app` (the settings page is empty). The note is only cleared once it has
+been saved.
 
 ## Setup
 
@@ -56,26 +67,46 @@ swap the `fetch` call in `src/index.js`.
 Test it before touching the watch:
 
 ```bash
-curl -X POST https://quick-note.YOUR-SUBDOMAIN.workers.dev/note \
+curl -i -X POST https://quick-note.YOUR-SUBDOMAIN.workers.dev/note \
   -H 'Content-Type: application/json' \
   -d '{"secret":"YOUR-SECRET","text":"hello from curl"}'
 ```
 
-A note should appear in Evernote. If it doesn't, stop here — nothing downstream
-will work either.
+You should get `200 ok` and a note in Evernote. If it doesn't work, stop here —
+nothing downstream will either. `401` means the secret is wrong, `502` means
+Resend refused the mail (`wrangler tail` shows why: usually an unverified
+`FROM_EMAIL` or a bad API key), and `404` means the URL is missing `/note`.
+
+To run the relay's tests:
+
+```bash
+cd relay
+npm install
+npm test
+```
 
 ### 3. Build and install the watchapp
 
-Edit `RELAY_URL` and `SHARED_SECRET` at the top of `src/pkjs/index.js` first.
-
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
+npm install
 pebble build
 pebble install --phone <YOUR_PHONE_IP>
 ```
 
-Or `pebble install --emulator emery` to try the UI (dictation won't work in the
-emulator — it needs a real mic and the phone app).
+Or open `build/pebble-evernote.pbw` on your phone with the Pebble app.
+
+`pebble install --emulator emery` lets you try the UI (dictation won't work in
+the emulator — it needs a real mic and the phone app).
+
+### 4. Point the app at your relay
+
+In the Pebble phone app, open Quick Note's settings and fill in:
+
+- **Relay URL** — `https://quick-note.YOUR-SUBDOMAIN.workers.dev/note`
+- **Shared secret** — the same string you gave `wrangler secret put SHARED_SECRET`
+
+Then dictate a note and press UP.
 
 ## Known rough edges
 
@@ -85,8 +116,11 @@ emulator — it needs a real mic and the phone app).
   this app.
 - Targets `basalt`, `chalk`, `diorite`, `emery`. Add `gabbro` (Time 2 Round) or
   `flint` (Pebble 2 Duo) to `targetPlatforms` if your SDK build supports them.
-- Note buffer is 512 bytes. Raise `NOTE_MAX` in `src/c/main.c` if you want more,
-  and bump the AppMessage outbox size to match.
+- Note buffer is 512 bytes. Raise `NOTE_MAX` in `src/c/main.c` if you want more;
+  the AppMessage outbox and saved-note storage are sized from it.
+- The app's JavaScript is allowed to reach any host (`"usesPermissions":
+  ["Internet"]` in `package.json`) because the relay URL is only known once you
+  enter it.
 - Evernote's free tier caps you at 50 notes total, so this assumes a paid plan.
 
 ## Ideas if you want to keep going
@@ -95,4 +129,4 @@ emulator — it needs a real mic and the phone app).
   meeting.
 - Tag prefixes: say "work" as the first word and have the Worker convert it to
   `#work` in the subject line.
-- Route to a specific notebook per app config using the Pebble settings page.
+- Route to a specific notebook with another field on the settings page.
